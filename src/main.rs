@@ -7,8 +7,6 @@ mod board;
 mod solver;
 
 fn main() {
-    time_graph::enable_data_collection(true);
-
     let mut sudoku = Sudoku::new();
     sudoku.load_board_from_str(
         "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
@@ -21,12 +19,6 @@ fn main() {
     sudoku.solve(&mut solver);
     println!("Time elapsed: {:?}", start.elapsed());
     println!("{}", sudoku);
-
-    let graph = time_graph::get_full_graph();
-
-    println!("{}", graph.as_dot());
-
-    println!("{}", graph.as_table());
 
     // let mut sudoku = Sudoku::new();
     // let solver = backtracking_ds::BDSS::new();

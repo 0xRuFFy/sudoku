@@ -62,7 +62,6 @@ impl Sudoku {
         }
     }
 
-    #[time_graph::instrument]
     pub fn load_board_from_str(&mut self, board: &str) {
         if board.len() != 81 {
             panic!("Board must be 81 characters long.");
@@ -79,12 +78,10 @@ impl Sudoku {
         }
     }
 
-    #[time_graph::instrument]
     pub fn get(&self, row: usize, col: usize) -> u8 {
         self.board[row][col]
     }
 
-    #[time_graph::instrument]
     pub fn set(&mut self, row: usize, col: usize, value: u8) {
         self.board[row][col] = value;
 
@@ -93,17 +90,14 @@ impl Sudoku {
             && self.is_valid_square(SQUARES[row][col]);
     }
 
-    #[time_graph::instrument]
     pub fn is_valid(&self) -> bool {
         self.valid
     }
 
-    #[time_graph::instrument]
     pub fn is_solved(&self) -> bool {
         self.valid && self.get_open_cells().is_empty()
     }
 
-    #[time_graph::instrument]
     pub fn solve(&mut self, solver: &mut dyn Solver) {
         // let mut count = 0;
         match solver.solve(self) {
@@ -115,7 +109,6 @@ impl Sudoku {
         }
     }
 
-    #[time_graph::instrument]
     pub fn get_open_cells(&self) -> Vec<(usize, usize)> {
         let mut open_cells = Vec::new();
         for (i, row) in self.board.iter().enumerate() {
@@ -128,7 +121,6 @@ impl Sudoku {
         open_cells
     }
 
-    #[time_graph::instrument]
     pub fn can_set_validly(&self, row: usize, col: usize, value: u8) -> bool {
         // let square = SQUARES[row][col];
 
@@ -143,7 +135,6 @@ impl Sudoku {
         true
     }
 
-    #[time_graph::instrument]
     fn is_valid_row(&self, row: usize) -> bool {
         let mut seen = 0u16;
         let mut mask: u16;
@@ -160,7 +151,6 @@ impl Sudoku {
         true
     }
 
-    #[time_graph::instrument]
     fn is_valid_column(&self, col: usize) -> bool {
         let mut seen = 0u16;
         let mut mask: u16;
@@ -178,7 +168,6 @@ impl Sudoku {
         true
     }
 
-    #[time_graph::instrument]
     fn is_valid_square(&self, square: usize) -> bool {
         let mut seen = 0u16;
         let mut mask: u16;

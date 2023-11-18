@@ -13,4 +13,3 @@ name = "benchmark"
 harness = false
 
 [dependencies]
-time-graph = { version = "0.3.1", features = ["json", "table"] }

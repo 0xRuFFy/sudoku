@@ -9,7 +9,6 @@ impl BDSS {
         Self {}
     }
 
-    #[time_graph::instrument]
     fn get_possible_values(sudoku: &mut Sudoku, row: usize, col: usize) -> Vec<u8> {
         // let mut possible_values = Vec::new();
         let mut possible_values = Vec::with_capacity(9);
@@ -21,7 +20,6 @@ impl BDSS {
         possible_values
     }
 
-    #[time_graph::instrument]
     fn get_least_variable_cell(sudoku: &mut Sudoku) -> ((usize, usize), Vec<u8>) {
         let open = sudoku.get_open_cells();
         let mut min = 9;
@@ -46,7 +44,6 @@ impl BDSS {
 }
 
 impl Solver for BDSS {
-    #[time_graph::instrument]
     fn solve(&self, sudoku: &Sudoku) -> Option<Sudoku> {
         let mut sudoku = sudoku.clone();
 
