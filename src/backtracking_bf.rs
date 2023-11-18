@@ -5,6 +5,7 @@ pub type BBFS = BacktrackingBruteForceSolver;
 pub struct BacktrackingBruteForceSolver {}
 
 impl BBFS {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {}
     }

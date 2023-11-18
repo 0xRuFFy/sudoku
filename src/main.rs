@@ -4,37 +4,44 @@ use std::{fs, io, io::Write as _I, sync::mpsc, thread, time::Instant};
 mod backtracking_bf; // backtracking brute force
 mod backtracking_ds; // backtracking dynamic selection
 mod board;
-mod puzzles;
 mod solver;
 
 fn main() {
-    // let mut sudoku = Sudoku::new();
-    // sudoku.load_board_from_str(
-    //     "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
-    // );
-    // println!("{}", sudoku);
-
-    // // let solver = backtracking_bf::BBFS::new();
-    // let solver = backtracking_ds::BDSS::new();
-    // let start = Instant::now();
-    // sudoku.solve(&solver);
-    // println!("Time elapsed: {:?}", start.elapsed());
-    // println!("{}", sudoku);
+    time_graph::enable_data_collection(true);
 
     let mut sudoku = Sudoku::new();
-    let solver = backtracking_ds::BDSS::new();
-    let file = fs::read_to_string("data/bench.txt").expect("Unable to read file");
-    let mut lines = file.lines();
-    let count = lines.next().map(|l| l.parse::<usize>().unwrap()).unwrap();
-    println!("Running {} benchmarks.", count);
-    let mut total = 0;
-    for line in lines {
-        sudoku.load_board_from_str(line);
-        sudoku.solve(&solver);
-        total += 1;
-        print!("{:<6} / {:<6}\r", total, count);
-        io::stdout().flush().unwrap();
-    }
+    sudoku.load_board_from_str(
+        "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
+    );
+    println!("{}", sudoku);
+
+    // let solver = backtracking_bf::BBFS::new();
+    let mut solver = backtracking_ds::BDSS::new();
+    let start = Instant::now();
+    sudoku.solve(&mut solver);
+    println!("Time elapsed: {:?}", start.elapsed());
+    println!("{}", sudoku);
+
+    let graph = time_graph::get_full_graph();
+
+    println!("{}", graph.as_dot());
+
+    println!("{}", graph.as_table());
+
+    // let mut sudoku = Sudoku::new();
+    // let solver = backtracking_ds::BDSS::new();
+    // let file = fs::read_to_string("data/bench.txt").expect("Unable to read file");
+    // let mut lines = file.lines();
+    // let count = lines.next().map(|l| l.parse::<usize>().unwrap()).unwrap();
+    // println!("Running {} benchmarks.", count);
+    // let mut total = 0;
+    // for line in lines {
+    //     sudoku.load_board_from_str(line);
+    //     sudoku.solve(&solver);
+    //     total += 1;
+    //     print!("{:<6} / {:<6}\r", total, count);
+    //     io::stdout().flush().unwrap();
+    // }
 
     // let mut i = 0;
     // let (tx, rx) = mpsc::channel();
