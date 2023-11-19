@@ -110,11 +110,11 @@ impl Sudoku {
     }
 
     pub fn get_open_cells(&self) -> Vec<(usize, usize)> {
-        let mut open_cells = Vec::new();
-        for (i, row) in self.board.iter().enumerate() {
-            for (j, value) in row.iter().enumerate() {
-                if *value == 0 {
-                    open_cells.push((i, j));
+        let mut open_cells = Vec::with_capacity(81);
+        for row in 0..9 {
+            for col in 0..9 {
+                if self.board[row][col] == 0 {
+                    open_cells.push((row, col));
                 }
             }
         }
