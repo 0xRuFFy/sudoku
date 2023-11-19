@@ -150,30 +150,23 @@ impl Sudoku {
         self.open_cells.clone()
     }
 
-    pub fn can_set_validly(&self, row: usize, col: usize, value: u8) -> bool {
-        let mask = 1 << (value - 1);
+    pub fn get_pencil_marks(&self, row: usize, col: usize) -> Vec<u8> {
+        let mut marks: u128 = 0b111111111;
         let square = SQUARES[row][col];
 
         for i in 0..9 {
-            let cell_mask = mask << (i * CELL_MASK_LEN);
-            if self.rows[row] & cell_mask != 0
-                || self.cols[col] & cell_mask != 0
-                || self.squares[square] & cell_mask != 0
-            {
-                return false;
-            }
+            marks &= !((self.rows[row] >> (i * CELL_MASK_LEN)) & CELL_MASK);
+            marks &= !((self.cols[col] >> (i * CELL_MASK_LEN)) & CELL_MASK);
+            marks &= !((self.squares[square] >> (i * CELL_MASK_LEN)) & CELL_MASK);
         }
-        true
-    }
 
-    pub fn get_pencil_marks(&self, row: usize, col: usize) -> Vec<u8> {
-        let mut marks = Vec::with_capacity(9);
-        for value in 1..=9 {
-            if self.can_set_validly(row, col, value) {
-                marks.push(value);
-            }
+        let mut result = Vec::with_capacity(9);
+        while marks != 0 {
+            let value = marks.trailing_zeros() as u8 + 1;
+            result.push(value);
+            marks &= !(1 << (value - 1));
         }
-        marks
+        result
     }
 
     // ---------------| Solving |-----------------
