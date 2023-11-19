@@ -34,7 +34,7 @@ impl Solver for BBFS {
                 if i == 0 {
                     return None;
                 }
-                sudoku.set(row, col, 0);
+                sudoku.unset(row, col, true);
                 i -= 1;
             }
         }

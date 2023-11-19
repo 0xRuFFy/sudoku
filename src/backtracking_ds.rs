@@ -9,17 +9,6 @@ impl BDSS {
         Self {}
     }
 
-    fn get_possible_values(sudoku: &mut Sudoku, row: usize, col: usize) -> Vec<u8> {
-        // let mut possible_values = Vec::new();
-        let mut possible_values = Vec::with_capacity(9);
-        for value in 1..=9 {
-            if sudoku.can_set_validly(row, col, value) {
-                possible_values.push(value);
-            }
-        }
-        possible_values
-    }
-
     fn get_least_variable_cell(sudoku: &mut Sudoku) -> ((usize, usize), Vec<u8>) {
         let open = sudoku.get_open_cells();
         let mut min = 9;
@@ -27,7 +16,11 @@ impl BDSS {
         let mut min_values = Vec::new();
 
         for (row, col) in open.iter() {
-            let values = Self::get_possible_values(sudoku, *row, *col);
+            let values = sudoku.get_pencil_marks(*row, *col);
+            if values.is_empty() {
+                return ((*row, *col), values);
+            }
+
             if values.len() == 1 {
                 return ((*row, *col), values);
             }
@@ -45,11 +38,11 @@ impl BDSS {
 
 impl Solver for BDSS {
     fn solve(&self, sudoku: &Sudoku) -> Option<Sudoku> {
+        // TODO: maybe dont clone the sudoku each recursion (sounds like kinda a lot of work)
         let mut sudoku = sudoku.clone();
 
         loop {
             let ((row, col), values) = Self::get_least_variable_cell(&mut sudoku);
-
             if values.is_empty() {
                 return None;
             }

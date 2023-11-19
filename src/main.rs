@@ -1,5 +1,6 @@
-use board::Sudoku;
-use std::{fs, io, io::Write as _I, sync::mpsc, thread, time::Instant};
+// use std::{fs, io, io::Write as _I, sync::mpsc, thread, time::Instant};
+
+use std::time::Instant;
 
 mod backtracking_bf; // backtracking brute force
 mod backtracking_ds; // backtracking dynamic selection
@@ -7,7 +8,7 @@ mod board;
 mod solver;
 
 fn main() {
-    let mut sudoku = Sudoku::new();
+    let mut sudoku = board::Sudoku::new();
     sudoku.load_board_from_str(
         "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
     );

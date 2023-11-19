@@ -1,38 +1,8 @@
 use crate::solver::Solver;
 
-// ------------| Unicode Art |--------------
-const TOP_ROW: &str = "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
-const MIDDLE_ROW_DOUBLE: &str = "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣";
-const MIDDLE_ROW_SINGLE: &str = "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢";
-const BOTTOM_ROW: &str = "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝";
-const STRAIGHT_DOUBLE: &str = "║";
-const STRAIGHT_SINGLE: &str = "│";
-const EMPTY: &str = "   ";
-
-// ------------| Lookup Tables |--------------
-// const ROWS: [[usize; 9]; 9] = [
-//     [0, 0, 0, 0, 0, 0, 0, 0, 0],
-//     [1, 1, 1, 1, 1, 1, 1, 1, 1],
-//     [2, 2, 2, 2, 2, 2, 2, 2, 2],
-//     [3, 3, 3, 3, 3, 3, 3, 3, 3],
-//     [4, 4, 4, 4, 4, 4, 4, 4, 4],
-//     [5, 5, 5, 5, 5, 5, 5, 5, 5],
-//     [6, 6, 6, 6, 6, 6, 6, 6, 6],
-//     [7, 7, 7, 7, 7, 7, 7, 7, 7],
-//     [8, 8, 8, 8, 8, 8, 8, 8, 8],
-// ];
-
-// const COLS: [[usize; 9]; 9] = [
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-//     [0, 1, 2, 3, 4, 5, 6, 7, 8],
-// ];
+// ------------| Lookup Tables  / Constants |--------------
+const CELL_MASK_LEN: usize = 9;
+const CELL_MASK: u128 = 0b111111111;
 
 const SQUARES: [[usize; 9]; 9] = [
     [0, 0, 0, 1, 1, 1, 2, 2, 2],
@@ -46,23 +16,52 @@ const SQUARES: [[usize; 9]; 9] = [
     [6, 6, 6, 7, 7, 7, 8, 8, 8],
 ];
 
-type SudokuBoard = [[u8; 9]; 9];
+const IN_SQUARE_IDX: [[usize; 9]; 9] = [
+    [0, 1, 2, 0, 1, 2, 0, 1, 2],
+    [3, 4, 5, 3, 4, 5, 3, 4, 5],
+    [6, 7, 8, 6, 7, 8, 6, 7, 8],
+    [0, 1, 2, 0, 1, 2, 0, 1, 2],
+    [3, 4, 5, 3, 4, 5, 3, 4, 5],
+    [6, 7, 8, 6, 7, 8, 6, 7, 8],
+    [0, 1, 2, 0, 1, 2, 0, 1, 2],
+    [3, 4, 5, 3, 4, 5, 3, 4, 5],
+    [6, 7, 8, 6, 7, 8, 6, 7, 8],
+];
 
 #[derive(Clone)]
 pub struct Sudoku {
-    board: SudokuBoard,
+    rows: [u128; 9],
+    cols: [u128; 9],
+    squares: [u128; 9],
     valid: bool,
+
+    open_cells: Vec<(usize, usize)>,
 }
 
 impl Sudoku {
+    // ---------------| Constructors |-----------------
     pub fn new() -> Self {
         Self {
-            board: [[0; 9]; 9],
+            rows: [0; 9],
+            cols: [0; 9],
+            squares: [0; 9],
             valid: true,
+            open_cells: (0..81)
+                .map(|i| Self::index_to_row_col(i))
+                .collect::<Vec<(usize, usize)>>(),
         }
     }
 
+    // ---------------| Initializers |-----------------
     pub fn load_board_from_str(&mut self, board: &str) {
+        self.rows = [0; 9];
+        self.cols = [0; 9];
+        self.squares = [0; 9];
+        self.valid = true;
+        self.open_cells = (0..81)
+            .map(|i| Self::index_to_row_col(i))
+            .collect::<Vec<(usize, usize)>>();
+
         if board.len() != 81 {
             panic!("Board must be 81 characters long.");
         }
@@ -72,62 +71,94 @@ impl Sudoku {
             .collect::<Vec<u8>>();
 
         for (i, value) in board.iter().enumerate() {
+            if *value == 0 {
+                continue;
+            }
             let row = i / 9;
             let col = i % 9;
             self.set(row, col, *value);
         }
     }
 
+    // ---------------| Getters & Setters |-----------------
+    pub fn get_board_as_str(&self) -> String {
+        let mut board = String::with_capacity(81);
+
+        for row in 0..9 {
+            for col in 0..9 {
+                board.push_str(&self.get(row, col).to_string());
+            }
+        }
+
+        board
+    }
+
     pub fn get(&self, row: usize, col: usize) -> u8 {
-        self.board[row][col]
+        let cell = self.rows[row] >> (col * CELL_MASK_LEN) & CELL_MASK;
+        if cell == 0 {
+            return 0;
+        }
+        cell.trailing_zeros() as u8 + 1
     }
 
     pub fn set(&mut self, row: usize, col: usize, value: u8) {
-        self.board[row][col] = value;
+        let mask = 1 << (value - 1);
+        // let unset_mask = 1 << (self.get(row, col) - 1);
+        let square = SQUARES[row][col];
+        let index_in_square = IN_SQUARE_IDX[row][col];
 
-        self.valid = self.is_valid_row(row)
-            && self.is_valid_column(col)
-            && self.is_valid_square(SQUARES[row][col]);
+        self.unset(row, col, false);
+
+        // self.rows[row] &= !(mask << (col * CELL_MASK_LEN));
+        self.rows[row] |= mask << (col * CELL_MASK_LEN);
+
+        // self.cols[col] &= !(mask << (row * CELL_MASK_LEN));
+        self.cols[col] |= mask << (row * CELL_MASK_LEN);
+
+        // self.squares[square] &= !(mask << (index_in_square * CELL_MASK_LEN));
+        self.squares[square] |= mask << (index_in_square * CELL_MASK_LEN);
+
+        self.valid = self.is_valid_cell(row, col);
+        self.open_cells.retain(|(r, c)| *r != row || *c != col); // TODO: This may be slow
     }
 
+    pub fn unset(&mut self, row: usize, col: usize, check: bool) {
+        let mask = 1 << (self.get(row, col) - 1);
+        let square = (row / 3) * 3 + (col / 3);
+        let index_in_square = IN_SQUARE_IDX[row][col];
+
+        self.rows[row] &= !(mask << (col * CELL_MASK_LEN));
+        self.cols[col] &= !(mask << (row * CELL_MASK_LEN));
+        self.squares[square] &= !(mask << (index_in_square * CELL_MASK_LEN));
+
+        if check {
+            self.valid = self.is_valid_cell(row, col);
+        }
+        self.open_cells.push((row, col));
+    }
+
+    // ---------------| Board State |-----------------
     pub fn is_valid(&self) -> bool {
         self.valid
     }
 
     pub fn is_solved(&self) -> bool {
-        self.valid && self.get_open_cells().is_empty()
-    }
-
-    pub fn solve(&mut self, solver: &mut dyn Solver) {
-        // let mut count = 0;
-        match solver.solve(self) {
-            Some(s) => {
-                *self = s;
-                // println!("Solved in {} iterations.", count);
-            }
-            None => panic!("No solution found."),
-        }
+        self.valid && self.open_cells.is_empty()
     }
 
     pub fn get_open_cells(&self) -> Vec<(usize, usize)> {
-        let mut open_cells = Vec::with_capacity(81);
-        for row in 0..9 {
-            for col in 0..9 {
-                if self.board[row][col] == 0 {
-                    open_cells.push((row, col));
-                }
-            }
-        }
-        open_cells
+        self.open_cells.clone()
     }
 
     pub fn can_set_validly(&self, row: usize, col: usize, value: u8) -> bool {
-        // let square = SQUARES[row][col];
+        let mask = 1 << (value - 1);
+        let square = SQUARES[row][col];
 
         for i in 0..9 {
-            if self.board[row][i] == value
-                || self.board[i][col] == value
-                || self.board[(row / 3) * 3 + (i / 3)][(col / 3) * 3 + (i % 3)] == value
+            let cell_mask = mask << (i * CELL_MASK_LEN);
+            if self.rows[row] & cell_mask != 0
+                || self.cols[col] & cell_mask != 0
+                || self.squares[square] & cell_mask != 0
             {
                 return false;
             }
@@ -135,58 +166,74 @@ impl Sudoku {
         true
     }
 
-    fn is_valid_row(&self, row: usize) -> bool {
-        let mut seen = 0u16;
-        let mut mask: u16;
-        for value in self.board[row].iter() {
-            if *value == 0 {
-                continue;
+    pub fn get_pencil_marks(&self, row: usize, col: usize) -> Vec<u8> {
+        let mut marks = Vec::with_capacity(9);
+        for value in 1..=9 {
+            if self.can_set_validly(row, col, value) {
+                marks.push(value);
             }
-            mask = 1 << value;
-            if seen & mask != 0 {
-                return false;
-            }
-            seen |= mask;
         }
-        true
+        marks
+    }
+
+    // ---------------| Solving |-----------------
+    pub fn solve(&mut self, solver: &mut dyn Solver) {
+        match solver.solve(self) {
+            Some(s) => *self = s,
+            None => panic!("No solution found."),
+        }
+    }
+
+    // ---------------| Private Helpers |-----------------
+    fn is_valid_cell(&self, row: usize, col: usize) -> bool {
+        self.is_valid_row(row)
+            && self.is_valid_column(col)
+            && self.is_valid_square(SQUARES[row][col])
+    }
+
+    fn is_valid_row(&self, row: usize) -> bool {
+        self.is_valid_helper(row, &self.rows)
     }
 
     fn is_valid_column(&self, col: usize) -> bool {
-        let mut seen = 0u16;
-        let mut mask: u16;
-        for row in 0..9 {
-            let value = self.board[row][col];
-            if value == 0 {
+        self.is_valid_helper(col, &self.cols)
+    }
+
+    fn is_valid_square(&self, square: usize) -> bool {
+        self.is_valid_helper(square, &self.squares)
+    }
+
+    fn is_valid_helper(&self, index: usize, arr: &[u128; 9]) -> bool {
+        let mut releavant = arr[index];
+        let mut mask = 0;
+        for _ in 0..9 {
+            let cell = releavant & CELL_MASK;
+            if cell == 0 {
+                releavant >>= CELL_MASK_LEN;
                 continue;
             }
-            mask = 1 << value;
-            if seen & mask != 0 {
+            if mask & cell != 0 {
                 return false;
             }
-            seen |= mask;
+            mask |= cell;
+            releavant >>= CELL_MASK_LEN;
         }
         true
     }
 
-    fn is_valid_square(&self, square: usize) -> bool {
-        let mut seen = 0u16;
-        let mut mask: u16;
-        for i in 0..9 {
-            let row = (square / 3) * 3 + (i / 3);
-            let col = (square % 3) * 3 + (i % 3);
-            let value = self.board[row][col];
-            if value == 0 {
-                continue;
-            }
-            mask = 1 << value;
-            if seen & mask != 0 {
-                return false;
-            }
-            seen |= mask;
-        }
-        true
+    // ---------------| Static Helpers |-----------------
+    pub fn index_to_row_col(index: usize) -> (usize, usize) {
+        (index / 9, index % 9)
     }
 }
+
+const TOP_ROW: &str = "╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
+const MIDDLE_ROW_DOUBLE: &str = "╠═══╪═══╪═══╬═══╪═══╪═══╬═══╪═══╪═══╣";
+const MIDDLE_ROW_SINGLE: &str = "╟───┼───┼───╫───┼───┼───╫───┼───┼───╢";
+const BOTTOM_ROW: &str = "╚═══╧═══╧═══╩═══╧═══╧═══╩═══╧═══╧═══╝";
+const STRAIGHT_DOUBLE: &str = "║";
+const STRAIGHT_SINGLE: &str = "│";
+const EMPTY: &str = "   ";
 
 impl std::fmt::Display for Sudoku {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -195,10 +242,11 @@ impl std::fmt::Display for Sudoku {
         result.push_str(TOP_ROW);
         result.push('\n');
 
-        for (i, row) in self.board.iter().enumerate() {
+        for i in 0..9 {
             result.push_str("║");
-            for (j, value) in row.iter().enumerate() {
-                if value == &0 {
+            for j in 0..9 {
+                let value = self.get(i, j);
+                if value == 0 {
                     result.push_str(EMPTY);
                 } else {
                     result.push_str(&format!(" {} ", value));
@@ -227,39 +275,3 @@ impl std::fmt::Display for Sudoku {
         write!(f, "{}", result)
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     const TEST_BOARD_VALID: [[u8; 9]; 9] = [
-//         [5, 3, 0, 0, 7, 0, 0, 0, 0],
-//         [6, 0, 0, 1, 9, 5, 0, 0, 0],
-//         [0, 9, 8, 0, 0, 0, 0, 6, 0],
-//         [8, 0, 0, 0, 6, 0, 0, 0, 3],
-//         [4, 0, 0, 8, 0, 3, 0, 0, 1],
-//         [7, 0, 0, 0, 2, 0, 0, 0, 6],
-//         [0, 6, 0, 0, 0, 0, 2, 8, 0],
-//         [0, 0, 0, 4, 1, 9, 0, 0, 5],
-//         [0, 0, 0, 0, 8, 0, 0, 7, 9],
-//     ];
-
-//     const TEST_BOARD_INVALID: [[u8; 9]; 9] = [
-//         [5, 3, 0, 0, 7, 0, 0, 0, 0],
-//         [6, 5, 0, 1, 9, 5, 0, 0, 0],
-//         [0, 9, 8, 0, 0, 0, 0, 6, 0],
-//         [8, 0, 0, 0, 6, 0, 0, 5, 3],
-//         [4, 0, 0, 8, 0, 3, 0, 0, 1],
-//         [7, 0, 0, 0, 2, 0, 5, 0, 6],
-//         [0, 6, 0, 0, 7, 0, 2, 8, 0],
-//         [0, 5, 0, 4, 1, 9, 0, 6, 5],
-//         [0, 0, 0, 0, 8, 0, 0, 7, 9],
-//     ];
-
-//     const TEST_BOARD_INVALID_VALID_ROWS: [u8; 7] = [0, 2, 3, 4, 5, 6, 8];
-//     const TEST_BOARD_INVALID_INVALID_ROWS: [u8; 2] = [1, 7];
-//     const TEST_BOARD_INVALID_VALID_COLUMNS: [u8; 6] = [0, 2, 3, 5, 6, 8];
-//     const TEST_BOARD_INVALID_INVALID_COLUMNS: [u8; 3] = [1, 4, 7];
-//     const TEST_BOARD_INVALID_VALID_SQUARES: [u8; 7] = [1, 2, 3, 4, 6, 7, 8];
-//     const TEST_BOARD_INVALID_INVALID_SQUARES: [u8; 2] = [0, 5];
-// }
