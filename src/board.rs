@@ -123,7 +123,11 @@ impl Sudoku {
     }
 
     pub fn unset(&mut self, row: usize, col: usize, check: bool) {
-        let mask = 1 << (self.get(row, col) - 1);
+        let value = self.get(row, col);
+        if value == 0 {
+            return;
+        }
+        let mask = 1 << (value - 1);
         let square = (row / 3) * 3 + (col / 3);
         let index_in_square = IN_SQUARE_IDX[row][col];
 
