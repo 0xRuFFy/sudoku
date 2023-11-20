@@ -37,7 +37,7 @@ impl BDSS {
 }
 
 impl Solver for BDSS {
-    fn solve(&self, sudoku: &Sudoku) -> Option<Sudoku> {
+    fn solve(&mut self, sudoku: &Sudoku) -> Option<Sudoku> {
         // TODO: maybe dont clone the sudoku each recursion (sounds like kinda a lot of work)
         let mut sudoku = sudoku.clone();
 

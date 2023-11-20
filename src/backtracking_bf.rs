@@ -12,7 +12,7 @@ impl BBFS {
 }
 
 impl Solver for BBFS {
-    fn solve(&self, sudoku: &Sudoku) -> Option<Sudoku> {
+    fn solve(&mut self, sudoku: &Sudoku) -> Option<Sudoku> {
         let mut sudoku = sudoku.clone();
         let open = sudoku.get_open_cells();
         let mut i = 0;

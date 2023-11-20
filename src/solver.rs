@@ -9,5 +9,5 @@ pub trait Solver {
     /// # Returns
     /// * `Some(Sudoku)` - The solution to the sudoku.
     /// * `None` - If the sudoku has no solution.
-    fn solve(&self, sudoku: &Sudoku) -> Option<Sudoku>;
+    fn solve(&mut self, sudoku: &Sudoku) -> Option<Sudoku>;
 }
