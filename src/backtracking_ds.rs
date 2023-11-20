@@ -48,15 +48,13 @@ impl Solver for BDSS {
             }
 
             for value in values {
-                sudoku.set(row, col, value);
+                sudoku.set(row, col, value, true); // true -> pencil mark is already valid
                 if sudoku.is_solved() {
                     return Some(sudoku);
                 }
-                if sudoku.is_valid() {
-                    let result = self.solve(&sudoku);
-                    if result.is_some() {
-                        return result;
-                    }
+                let result = self.solve(&sudoku);
+                if result.is_some() {
+                    return result;
                 }
             }
 

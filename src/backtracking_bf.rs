@@ -23,7 +23,7 @@ impl Solver for BBFS {
 
             if value < 9 {
                 value += 1;
-                sudoku.set(row, col, value);
+                sudoku.set(row, col, value, false);
                 if sudoku.is_solved() {
                     break;
                 }

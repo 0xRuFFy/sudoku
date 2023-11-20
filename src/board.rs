@@ -76,7 +76,7 @@ impl Sudoku {
             }
             let row = i / 9;
             let col = i % 9;
-            self.set(row, col, *value);
+            self.set(row, col, *value, true);
         }
     }
 
@@ -101,7 +101,7 @@ impl Sudoku {
         cell.trailing_zeros() as u8 + 1
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: u8) {
+    pub fn set(&mut self, row: usize, col: usize, value: u8, is_valid: bool) {
         let mask = 1 << (value - 1);
         // let unset_mask = 1 << (self.get(row, col) - 1);
         let square = SQUARES[row][col];
@@ -118,7 +118,10 @@ impl Sudoku {
         // self.squares[square] &= !(mask << (index_in_square * CELL_MASK_LEN));
         self.squares[square] |= mask << (index_in_square * CELL_MASK_LEN);
 
-        self.valid = self.is_valid_cell(row, col);
+        if !is_valid {
+            self.valid = self.is_valid_cell(row, col);
+        }
+        // self.valid = self.is_valid_cell(row, col);
         self.open_cells.retain(|(r, c)| *r != row || *c != col); // TODO: This may be slow
     }
 
