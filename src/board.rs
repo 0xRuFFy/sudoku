@@ -65,7 +65,7 @@ impl Sudoku {
     }
 
     // ---------------| Initializers |-----------------
-    pub fn load_board_from_str(&mut self, board: &str) {
+    pub fn load_board_from_str(&mut self, board: &str, null_char: char) {
         self.rows = [0; 9];
         self.cols = [0; 9];
         self.squares = [0; 9];
@@ -79,7 +79,12 @@ impl Sudoku {
         }
         let board = board
             .chars()
-            .map(|c| c.to_digit(10).expect("Invalid character in board string.") as u8)
+            .map(|c| {
+                if c == null_char {
+                    return 0;
+                }
+                c.to_digit(10).expect("Invalid character in board string.") as u8
+            })
             .collect::<Vec<u8>>();
 
         for (i, value) in board.iter().enumerate() {
