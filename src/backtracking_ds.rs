@@ -1,4 +1,5 @@
-use crate::{board::Sudoku, solver::Solver};
+use crate::board::Sudoku;
+use crate::solver::Solver;
 
 pub type BDSS = BacktrackingDynamicSelectionSolver;
 

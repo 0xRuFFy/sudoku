@@ -6,8 +6,7 @@ fn backtracking_ds_benchmark(c: &mut Criterion) {
 
     let mut sudoku = Sudoku::new();
     let mut solver = sudoku::BDSS::new();
-    const BOARD: &str =
-        "000000010400000000020000000000050407008000300001090000300400200050100000000806000";
+    const BOARD: &str = "000000010400000000020000000000050407008000300001090000300400200050100000000806000";
 
     group.significance_level(0.1).sample_size(500);
     group.measurement_time(std::time::Duration::from_secs(24));
