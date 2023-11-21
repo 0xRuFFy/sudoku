@@ -2,4 +2,4 @@
 tags
 Cargo.lock
 .vscode
-./data/other
+data/other
