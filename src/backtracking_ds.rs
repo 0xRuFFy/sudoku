@@ -42,24 +42,22 @@ impl Solver for BDSS {
         // TODO: maybe dont clone the sudoku each recursion (sounds like kinda a lot of work)
         let mut sudoku = sudoku.clone();
 
-        loop {
-            let ((row, col), values) = Self::get_least_variable_cell(&mut sudoku);
-            if values.is_empty() {
-                return None;
-            }
-
-            for value in values {
-                sudoku.set(row, col, value, true); // true -> pencil mark is already valid
-                if sudoku.is_solved() {
-                    return Some(sudoku);
-                }
-                let result = self.solve(&sudoku);
-                if result.is_some() {
-                    return result;
-                }
-            }
-
+        let ((row, col), values) = Self::get_least_variable_cell(&mut sudoku);
+        if values.is_empty() {
             return None;
         }
+
+        for value in values {
+            sudoku.set(row, col, value, true); // true -> pencil mark is already valid
+            if sudoku.is_solved() {
+                return Some(sudoku);
+            }
+            let result = self.solve(&sudoku);
+            if result.is_some() {
+                return result;
+            }
+        }
+
+        return None;
     }
 }
