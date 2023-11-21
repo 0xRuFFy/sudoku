@@ -5,17 +5,18 @@ use std::time::Instant;
 mod backtracking_bf; // backtracking brute force
 mod backtracking_ds; // backtracking dynamic selection
 mod board;
+mod smart_solver;
 mod solver;
 
 fn main() {
     let mut sudoku = board::Sudoku::new();
-    sudoku.load_board_from_str(
-        "000000010400000000020000000000050407008000300001090000300400200050100000000806000",
-    );
+    // sudoku.load_board_from_str("000000010400000000020000000000050407008000300001090000300400200050100000000806000");
+    sudoku.load_board_from_str("003020600900305001001806400008102900700000008006708200002609500800203009005010300");
     println!("{}", sudoku);
 
     // let mut solver = backtracking_bf::BBFS::new();
-    let mut solver = backtracking_ds::BDSS::new();
+    // let mut solver = backtracking_ds::BDSS::new();
+    let mut solver = smart_solver::SmartSolver::new();
     let start = Instant::now();
     sudoku.solve(&mut solver);
     println!("Time elapsed: {:?}", start.elapsed());
@@ -23,7 +24,8 @@ fn main() {
 
     // let mut sudoku = board::Sudoku::new();
     // // let mut solver = backtracking_bf::BBFS::new();
-    // let mut solver = backtracking_ds::BDSS::new();
+    // // let mut solver = backtracking_ds::BDSS::new();
+    // let mut solver = smart_solver::SmartSolver::new();
     // let file = std::fs::read_to_string("data/easy50.txt").expect("Unable to read file");
     // let lines = file.lines();
     // let count = lines.clone().count();
@@ -32,16 +34,14 @@ fn main() {
     // use std::io::{self, Write};
     // let start = Instant::now();
     // for line in lines {
+    //     println!("{}", line);
     //     sudoku.load_board_from_str(line);
-    //     println!("{}", sudoku);
     //     sudoku.solve(&mut solver);
-    //     println!("{}", sudoku);
     //     total += 1;
     //     print!("{:<6} / {:<6}\r", total, count);
     //     io::stdout().flush().unwrap();
     // }
     // println!("Time elapsed: {:?}", start.elapsed());
-
 
     // let file = std::fs::read_to_string("data/bench.txt").expect("Unable to read file");
     // let mut lines = file.lines();
