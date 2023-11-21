@@ -12,6 +12,7 @@ macro_rules! option_vec {
     };
 }
 
+#[derive(Debug, Clone)]
 pub struct SmartSolver {
     pencil_marks: [[u16; 9]; 9],
 }
@@ -86,11 +87,6 @@ impl SmartSolver {
     }
 
     fn get_unique_pencil_marked_cells(&self) -> Option<Vec<(usize, usize, u8)>> {
-        // todo!("Implement SmartSolver::get_unique_pencil_marked_cell")
-        // find cells that have a unique pencil mark in their row, column or square
-        // if there are multiple cells with unique pencil marks, return all of them
-        // if there are no cells with unique pencil marks, return None
-
         let mut cells = Vec::new();
 
         for row in 0..9 {
@@ -111,8 +107,6 @@ impl SmartSolver {
                         marks_square &= !self.pencil_marks[row][col];
                     }
                 }
-                // TODO: could use != 0 since it should never happen
-                // that 1 cell is the only option for multiple values
                 if marks_row.count_ones() == 1 {
                     let value = marks_row.trailing_zeros() as u8 + 1;
                     cells.push((row, col, value));
@@ -148,8 +142,12 @@ impl SmartSolver {
         }
     }
 
-    fn back_track(&self, sudoku: &Sudoku) -> Sudoku {
-        todo!("Implement SmartSolver::back_track_ds")
+    fn __get_least_variable_cell(__sudoku: &Sudoku) -> (usize, usize, u16) {
+        todo!("Implement SmartSolver::get_least_variable_cell")
+    }
+
+    fn __back_track(&self, __sudoku: &Sudoku) -> Option<Sudoku> {
+        todo!("Implement SmartSolver::back_track")
     }
 }
 
@@ -174,5 +172,7 @@ impl Solver for SmartSolver {
         }
 
         None
+
+        // self.back_track(&sudoku)
     }
 }
