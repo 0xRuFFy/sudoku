@@ -2,6 +2,16 @@ use crate::backtracking_ds;
 use crate::board::{Sudoku, SQUARES, SQUARES_INVERSE};
 use crate::solver::Solver;
 
+macro_rules! option_vec {
+    ($vec:expr) => {
+        if $vec.is_empty() {
+            None
+        } else {
+            Some($vec)
+        }
+    };
+}
+
 pub struct SmartSolver {
     pencil_marks: [[u16; 9]; 9],
 }
@@ -19,6 +29,8 @@ impl SmartSolver {
                 let value = sudoku.get(row, col);
                 if value == 0 {
                     self.pencil_marks[row][col] = sudoku.get_pencil_marks_raw(row, col);
+                } else {
+                    self.pencil_marks[row][col] = 0;
                 }
             }
         }
@@ -43,9 +55,11 @@ impl SmartSolver {
             }
 
             if let Some(cells) = self.get_unique_pencil_marked_cells() {
+                // println!("Unique pencil marked cells: {:?}", cells);
                 for (row, col, value) in cells.clone() {
                     new_sudoku.set(row, col, value, true);
                 }
+                // println!("{}", new_sudoku);
                 self.update_pencil_marks(&cells);
             } else {
                 break;
@@ -68,15 +82,53 @@ impl SmartSolver {
             }
         }
 
-        if cells.is_empty() {
-            None
-        } else {
-            Some(cells)
-        }
+        option_vec!(cells)
     }
 
     fn get_unique_pencil_marked_cells(&self) -> Option<Vec<(usize, usize, u8)>> {
-        todo!("Implement SmartSolver::get_unique_pencil_marked_cell")
+        // todo!("Implement SmartSolver::get_unique_pencil_marked_cell")
+        // find cells that have a unique pencil mark in their row, column or square
+        // if there are multiple cells with unique pencil marks, return all of them
+        // if there are no cells with unique pencil marks, return None
+
+        let mut cells = Vec::new();
+
+        for row in 0..9 {
+            for col in 0..9 {
+                let mut marks_row = self.pencil_marks[row][col].clone();
+                let mut marks_col = self.pencil_marks[row][col].clone();
+                let mut marks_square = self.pencil_marks[row][col].clone();
+                let square = SQUARES[row][col];
+                for i in 0..9 {
+                    if i != col {
+                        marks_row &= !self.pencil_marks[row][i];
+                    }
+                    if i != row {
+                        marks_col &= !self.pencil_marks[i][col];
+                    }
+                    let (row, col) = SQUARES_INVERSE[square][i];
+                    if row != row && col != col {
+                        marks_square &= !self.pencil_marks[row][col];
+                    }
+                }
+                // TODO: could use != 0 since it should never happen
+                // that 1 cell is the only option for multiple values
+                if marks_row.count_ones() == 1 {
+                    let value = marks_row.trailing_zeros() as u8 + 1;
+                    cells.push((row, col, value));
+                }
+                if marks_col.count_ones() == 1 {
+                    let value = marks_col.trailing_zeros() as u8 + 1;
+                    cells.push((row, col, value));
+                }
+                if marks_square.count_ones() == 1 {
+                    let value = marks_square.trailing_zeros() as u8 + 1;
+                    cells.push((row, col, value));
+                }
+            }
+        }
+
+        option_vec!(cells)
     }
 
     fn update_pencil_marks(&mut self, placed_cells: &[(usize, usize, u8)]) {
@@ -108,6 +160,9 @@ impl Solver for SmartSolver {
         if sudoku.is_solved() {
             return Some(sudoku);
         }
+        // else {
+        //     return None;
+        // }
 
         // TODO: use backtrack to find a value that must be correct -> set it -> logic process -> backtrack ...
         // a value must be correct if all other options are proven to be wrong and no other values
